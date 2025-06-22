@@ -28,7 +28,7 @@ const App = () => {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto min-h-screen bg-zinc-900 p-8 text-white">
+    <div className="max-w-screen-xl mx-auto min-h-screen bg-zinc-900 p-2 sm:p-4 md:p-8 text-white">
       <div>
         <div className="grid md:grid-cols-2 grid-cols-1 mb-12">
           <div className="space-y-4 my-auto md:text-left text-center">
@@ -50,7 +50,7 @@ const App = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
         {data.map(({ name, url, gender }, index) => (
           <div
             key={index}
