@@ -5,8 +5,7 @@ import data from "./data.json";
 const App = () => {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [isPressed, setIsPressed] = useState(false);
-  const pressTimer = useRef(null);
+  const modalRef = useRef(null);
 
   const handleCopy = (url, index, e) => {
     e.stopPropagation();
@@ -32,24 +31,15 @@ const App = () => {
     }
   };
 
-  const startPress = (index) => {
-    setIsPressed(true);
-    pressTimer.current = setTimeout(() => {
-      setSelectedImage(data[index]);
-    }, 300); // 300ms delay before showing the popup
-  };
-
-  const endPress = () => {
-    clearTimeout(pressTimer.current);
-    setIsPressed(false);
-  };
-
   const openImage = (index) => {
     setSelectedImage(data[index]);
   };
 
-  const closeImage = () => {
-    setSelectedImage(null);
+  const closeImage = (e) => {
+    // Only close if click is on backdrop or close button
+    if (!e || e.target === modalRef.current || e.target.closest('button[aria-label="Close"]')) {
+      setSelectedImage(null);
+    }
   };
 
   return (
@@ -81,13 +71,7 @@ const App = () => {
             key={index}
             className="relative bg-zinc-800 aspect-square rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all group"
             onClick={() => openImage(index)}
-            onTouchStart={() => startPress(index)}
-            onTouchEnd={endPress}
-            onMouseDown={() => startPress(index)}
-            onMouseUp={endPress}
-            onMouseLeave={endPress}
             style={{
-              transform: isPressed && pressTimer.current ? "scale(0.95)" : "scale(1)",
               transition: "transform 0.2s ease"
             }}
           >
@@ -96,6 +80,7 @@ const App = () => {
               alt={name}
               className="w-full h-full object-cover rounded-xl"
               referrerPolicy="no-referrer"
+              loading="lazy"
             />
 
             {/* Enhanced gradient overlay */}
@@ -141,16 +126,17 @@ const App = () => {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <button
-            onClick={closeImage}
-            className="absolute top-4 right-4 size-10 flex items-center justify-center text-white bg-white/20 rounded-full backdrop-blur-sm hover:bg-white/30 transition-all"
-            aria-label="Close"
+        <div 
+          ref={modalRef}
+          onClick={closeImage}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+        >
+          <div 
+            className="relative max-w-full max-h-full cursor-auto"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X size={24} />
-          </button>
-          
-          <div className="max-w-full max-h-full">
+            
+            {/* Use the same image that's already loaded in the grid */}
             <img
               src={selectedImage.url}
               alt={selectedImage.name}
