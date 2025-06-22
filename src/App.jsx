@@ -1,17 +1,22 @@
-import React, { useState } from "react";
-import { Copy, CopyCheck, Download } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Copy, CopyCheck, Download, X } from "lucide-react";
 import data from "./data.json";
 
 const App = () => {
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isPressed, setIsPressed] = useState(false);
+  const pressTimer = useRef(null);
 
-  const handleCopy = (url, index) => {
+  const handleCopy = (url, index, e) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(url);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const handleDownload = async (url, name) => {
+  const handleDownload = async (url, name, e) => {
+    e.stopPropagation();
     try {
       const response = await fetch(url);
       const blob = await response.blob();
@@ -25,6 +30,26 @@ const App = () => {
     } catch (error) {
       console.error("Download failed:", error);
     }
+  };
+
+  const startPress = (index) => {
+    setIsPressed(true);
+    pressTimer.current = setTimeout(() => {
+      setSelectedImage(data[index]);
+    }, 300); // 300ms delay before showing the popup
+  };
+
+  const endPress = () => {
+    clearTimeout(pressTimer.current);
+    setIsPressed(false);
+  };
+
+  const openImage = (index) => {
+    setSelectedImage(data[index]);
+  };
+
+  const closeImage = () => {
+    setSelectedImage(null);
   };
 
   return (
@@ -54,7 +79,17 @@ const App = () => {
         {data.map(({ name, url, gender }, index) => (
           <div
             key={index}
-            className="relative bg-zinc-800 aspect-square rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group"
+            className="relative bg-zinc-800 aspect-square rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all group"
+            onClick={() => openImage(index)}
+            onTouchStart={() => startPress(index)}
+            onTouchEnd={endPress}
+            onMouseDown={() => startPress(index)}
+            onMouseUp={endPress}
+            onMouseLeave={endPress}
+            style={{
+              transform: isPressed && pressTimer.current ? "scale(0.95)" : "scale(1)",
+              transition: "transform 0.2s ease"
+            }}
           >
             <img
               src={url}
@@ -76,10 +111,10 @@ const App = () => {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleCopy(url, index)}
+                  onClick={(e) => handleCopy(url, index, e)}
                   className={`size-7 flex items-center justify-center text-white bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all  ${
                     copiedIndex === index
-                      ? "bg-zinc-100 text-black hover:bg-zinc-100"
+                      ? "bg-zinc-100 text-zinc-950 hover:bg-zinc-100"
                       : ""
                   }`}
                   aria-label="Copy"
@@ -92,7 +127,7 @@ const App = () => {
                 </button>
 
                 <button
-                  onClick={() => handleDownload(url, name)}
+                  onClick={(e) => handleDownload(url, name, e)}
                   className="size-7 flex items-center justify-center text-white bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all"
                   aria-label="Download"
                 >
@@ -103,6 +138,67 @@ const App = () => {
           </div>
         ))}
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <button
+            onClick={closeImage}
+            className="absolute top-4 right-4 size-10 flex items-center justify-center text-white bg-white/20 rounded-full backdrop-blur-sm hover:bg-white/30 transition-all"
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
+          
+          <div className="max-w-full max-h-full">
+            <img
+              src={selectedImage.url}
+              alt={selectedImage.name}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              referrerPolicy="no-referrer"
+            />
+            
+            <div className="mt-4 text-center">
+              <h3 className="text-xl font-medium text-white">
+                {selectedImage.name}
+              </h3>
+              <div className="flex justify-center gap-4 mt-4">
+                <button
+                  onClick={(e) => {
+                    navigator.clipboard.writeText(selectedImage.url);
+                    setCopiedIndex(data.findIndex(img => img.url === selectedImage.url));
+                    setTimeout(() => setCopiedIndex(null), 2000);
+                    e.stopPropagation();
+                  }}
+                  className={`px-4 py-2 flex items-center justify-center gap-2 text-white bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all ${
+                    copiedIndex === data.findIndex(img => img.url === selectedImage.url)
+                      ? "bg-zinc-100 text-zinc-950 hover:bg-zinc-100"
+                      : ""
+                  }`}
+                >
+                  {copiedIndex === data.findIndex(img => img.url === selectedImage.url) ? (
+                    <CopyCheck size={18} />
+                  ) : (
+                    <Copy size={18} />
+                  )}
+                  Copy URL
+                </button>
+                
+                <button
+                  onClick={(e) => {
+                    handleDownload(selectedImage.url, selectedImage.name, e);
+                    e.stopPropagation();
+                  }}
+                  className="px-4 py-2 flex items-center justify-center gap-2 text-white bg-white/20 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all"
+                >
+                  <Download size={18} />
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
