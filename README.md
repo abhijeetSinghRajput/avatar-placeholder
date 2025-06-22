@@ -1,10 +1,10 @@
 # Avatar Placeholder
+**Live Demo:** [avatar-placeholder.netlify.app](https://avatarplaceholder.netlify.app)
 
 ![App Screenshot](./public/screenshot-homepage.png)
 
 A React application that displays a collection of avatar images with download and copy functionality.
 
-Live Demo: [[avatar-placeholder.vercel.app](https://avatarplaceholder.netlify.app/)](https://avatarplaceholder.netlify.app)
 
 ## Features
 
